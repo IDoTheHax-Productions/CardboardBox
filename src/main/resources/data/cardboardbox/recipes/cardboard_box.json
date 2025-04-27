@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PPP",
+    "P P",
+    "PPP"
+  ],
+  "key": {
+    "P": {
+      "item": "cardboardbox:paper_fibers"
+    }
+  },
+  "result": {
+    "id": "cardboardbox:cardboard_box",
+    "count": 1
+  }
+}
