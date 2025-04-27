@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "cardboardbox",
+  "version": "${version}",
+  "name": "CardboardBox",
+  "description": "A minecraft mod that adds a cardboard box that makes you invisible to mobs",
+  "authors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/cardboardbox/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "net.idothehax.cardboardbox.client.CardboardboxClient"
+    ],
+    "main": [
+      "net.idothehax.cardboardbox.Cardboardbox"
+    ]
+  },
+  "mixins": [
+    "cardboardbox.mixins.json",
+    {
+      "config": "cardboardbox.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
