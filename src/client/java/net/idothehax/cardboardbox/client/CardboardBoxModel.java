@@ -1,7 +1,4 @@
-package net.idothehax.cardboardbox.client;// Made with Blockbench 4.12.1
-// Exported for Minecraft version 1.17 or later with Mojang mappings
-// Paste this class into your mod and generate all required imports
-
+package net.idothehax.cardboardbox.client;
 
 import net.minecraft.client.model.*;
 import net.minecraft.client.render.VertexConsumer;

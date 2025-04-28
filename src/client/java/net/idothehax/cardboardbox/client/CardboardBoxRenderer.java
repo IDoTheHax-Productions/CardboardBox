@@ -7,6 +7,7 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.RotationAxis;
 
 public class CardboardBoxRenderer extends EntityRenderer<CardboardBoxEntity> {
 	private static final Identifier TEXTURE = Identifier.of("cardboardbox", "textures/entity/cardboard_box.png");
@@ -22,6 +23,8 @@ public class CardboardBoxRenderer extends EntityRenderer<CardboardBoxEntity> {
 		matrices.push();
 		// Adjust for Blockbench model scale and player position
 		matrices.translate(0.0, 1.0, 0.0);
+		// Rotate 180 degrees around X-axis to flip model upright
+		matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(180.0F));
 		matrices.scale(1.0F, 1.0F, 1.0F); // Adjust scale if needed
 		this.model.render(matrices, vertexConsumers.getBuffer(model.getLayer(this.getTexture(entity))), light, 0);
 		matrices.pop();
