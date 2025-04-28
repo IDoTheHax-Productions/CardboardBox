@@ -1,6 +1,7 @@
 package net.idothehax.cardboardbox;
 
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.MovementType;
 import net.minecraft.entity.data.DataTracker;
@@ -88,6 +89,12 @@ public class CardboardBoxEntity extends Entity {
     protected void addPassenger(Entity passenger) {
         super.addPassenger(passenger);
         passenger.setPosition(this.getX(), this.getY() + 0.5, this.getZ());
+    }
+
+    @Override
+    public Vec3d getPassengerRidingPos(Entity passenger) {
+        Vec3d basePos = super.getPassengerRidingPos(passenger);
+        return new Vec3d(basePos.x, basePos.y - 1, basePos.z);
     }
 
     @Override
