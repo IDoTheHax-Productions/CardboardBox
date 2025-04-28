@@ -4,6 +4,8 @@
   "package": "net.idothehax.cardboardbox.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "MobEntityMixin",
+    "PlayerEntityMixin",
   ],
   "injectors": {
     "defaultRequire": 1

@@ -1,6 +1,7 @@
 package net.idothehax.cardboardbox;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.item.v1.FabricItem;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.fabric.api.registry.FuelRegistry;
@@ -11,6 +12,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.component.type.FoodComponent;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
@@ -24,7 +26,6 @@ public class Cardboardbox implements ModInitializer {
 
 
     // Items
-    public static final Item CARDBOARD_BOX = new CardboardBoxItem(new Item.Settings().maxCount(1));
     public static final Item PAPER_FIBERS = new Item(new Item.Settings().food(new FoodComponent.Builder()
             .alwaysEdible()
             .nutrition(1)
@@ -32,12 +33,12 @@ public class Cardboardbox implements ModInitializer {
             .build()));
 
     // Blocks
-    public static final Block CARDBOARD_BOX_BLOCK = new CardboardBoxBlock(AbstractBlock.Settings.copy(Blocks.OAK_WOOD).strength(0.5f));
+    public static final Block CARDBOARD_BOX = new CardboardBoxBlock(AbstractBlock.Settings.copy(Blocks.OAK_WOOD).strength(0.5f));
 
     // Block entity
     public static final BlockEntityType<CardboardBoxBlockEntity> CARDBOARD_BOX_ENTITY = registerBlockEntityTypes(
             "cardboard_box_entity",
-            BlockEntityType.Builder.create(CardboardBoxBlockEntity::new, CARDBOARD_BOX_BLOCK).build()
+            BlockEntityType.Builder.create(CardboardBoxBlockEntity::new, CARDBOARD_BOX).build()
     );
 
     @Override
@@ -46,7 +47,7 @@ public class Cardboardbox implements ModInitializer {
 
         registerFuels();
         registerItems();
-
+        registerBlocks();
     }
 
     public static void registerFuels() {
@@ -54,12 +55,12 @@ public class Cardboardbox implements ModInitializer {
     }
 
     public static void registerItems() {
-        Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "cardboard_box"), CARDBOARD_BOX);
+        Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "cardboard_box"), new BlockItem(CARDBOARD_BOX, new Item.Settings()));
         Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "paper_fiber"), PAPER_FIBERS);
     }
 
     public static void registerBlocks() {
-        Registry.register(Registries.BLOCK, Identifier.of(MOD_ID, "cardboard_box"), CARDBOARD_BOX_BLOCK);
+        Registry.register(Registries.BLOCK, Identifier.of(MOD_ID, "cardboard_box"), CARDBOARD_BOX);
     }
 
     public static <T extends BlockEntityType<?>> T registerBlockEntityTypes(String path, T blockEntityType) {

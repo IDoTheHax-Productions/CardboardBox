@@ -28,7 +28,6 @@ public class CardboardBoxBlock extends Block implements BlockEntityProvider {
             CardboardBoxBlockEntity blockEntity = (CardboardBoxBlockEntity) world.getBlockEntity(pos);
             if (blockEntity != null && blockEntity.getOccupant() == null && !player.isSneaking()) {
                 blockEntity.setOccupant(player);
-                player.setInvisible(true); // Make player invisible to mobs
                 return ActionResult.SUCCESS;
             }
         }

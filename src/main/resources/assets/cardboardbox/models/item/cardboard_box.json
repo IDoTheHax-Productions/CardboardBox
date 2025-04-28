@@ -1,6 +1,3 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "cardboardbox:item/cardboard_box"
-  }
+  "parent": "cardboardbox:block/cardboard_box"
 }
