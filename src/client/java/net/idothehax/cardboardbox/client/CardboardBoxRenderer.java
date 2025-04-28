@@ -1,6 +1,7 @@
 package net.idothehax.cardboardbox.client;
 
 import net.idothehax.cardboardbox.CardboardBoxEntity;
+import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -26,7 +27,7 @@ public class CardboardBoxRenderer extends EntityRenderer<CardboardBoxEntity> {
 		// Rotate 180 degrees around X-axis to flip model upright
 		matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(180.0F));
 		matrices.scale(1.0F, 1.0F, 1.0F); // Adjust scale if needed
-		this.model.render(matrices, vertexConsumers.getBuffer(model.getLayer(this.getTexture(entity))), light, 0);
+		this.model.render(matrices, vertexConsumers.getBuffer(model.getLayer(this.getTexture(entity))), light, OverlayTexture.DEFAULT_UV, 0xFFFFFFFF);
 		matrices.pop();
 	}
 
