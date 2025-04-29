@@ -5,11 +5,14 @@
       "item": "minecraft:paper"
     },
     {
+      "tag": "minecraft:logs"
+    },
+    {
       "tag": "minecraft:axes"
     }
   ],
   "result": {
-    "id": "cardboardbox:paper_fiber",
+    "id": "cardboardbox:cardboard",
     "count": 1
   }
 }
