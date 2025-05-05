@@ -6,7 +6,6 @@ import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.idothehax.cardboardbox.Cardboardbox;
 
 public class CardboardboxClient implements ClientModInitializer {
-
     @Override
     public void onInitializeClient() {
         EntityRendererRegistry.register(Cardboardbox.CARDBOARD_BOX_ENTITY, CardboardBoxRenderer::new);
