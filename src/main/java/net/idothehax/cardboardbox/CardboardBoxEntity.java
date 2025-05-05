@@ -50,33 +50,24 @@ public class CardboardBoxEntity extends LivingEntity implements JumpingMount {
 
     @Override
     public Vec3d applyMovementInput(Vec3d movementInput, float slipperiness) {
-        // Only apply movement input if we have a passenger
         if (this.hasPassengers()) {
-            // Get the friction factor
             float friction = 0.91F * slipperiness;
 
-            // Calculate movement forces
             float moveForward = (float)movementInput.z;
             float moveStrafing = (float)movementInput.x;
-            float moveVertical = (float)movementInput.y;
 
-            // Calculate movement speed
-            float speed = 1.5F; // Adjust this value to control movement speed
+            // Adjust speed here
+            float speed = 0.15F;
 
-            // Apply movement based on input
             Vec3d movement = new Vec3d(
                     moveStrafing * speed,
-                    moveVertical,
+                    movementInput.y,
                     moveForward * speed
             );
 
-            // Apply friction
-            movement = movement.multiply(friction, 1.0, friction);
-
-            return movement;
+            return movement.multiply(friction, 1.0, friction);
         }
 
-        // If no passengers, use default movement
         return super.applyMovementInput(movementInput, slipperiness);
     }
 
@@ -85,87 +76,66 @@ public class CardboardBoxEntity extends LivingEntity implements JumpingMount {
         super.tick();
 
         if (!this.getWorld().isClient && !this.hasPassengers()) {
-            this.discard(); // Remove entity if no passengers
+            this.discard();
+            return;
         }
 
-        // Handle movement
         if (this.hasPassengers() && this.getFirstPassenger() instanceof PlayerEntity player) {
-            // Apply movement based on player input
+            // Basic movement control
             float forward = player.forwardSpeed;
             float strafe = player.sidewaysSpeed;
             float yaw = player.getYaw();
 
+            // Only apply movement if there's input
             if (forward != 0 || strafe != 0) {
-                Vec3d playerMovement = new Vec3d(strafe, 0, forward)
+                Vec3d movement = new Vec3d(strafe, 0, forward)
                         .rotateY((float) Math.toRadians(-yaw))
-                        .multiply(0.1); // Movement speed
+                        .multiply(0.1); // Speed multiplier
 
-                // Combine player movement with existing velocity
-                Vec3d currentVelocity = this.getVelocity();
-                Vec3d combinedVelocity = new Vec3d(
-                        playerMovement.x,
-                        currentVelocity.y, // Keep the Y velocity from jumping
-                        playerMovement.z
+                // Set velocity while preserving vertical movement
+                Vec3d velocity = this.getVelocity();
+                this.setVelocity(
+                        movement.x,
+                        velocity.y,
+                        movement.z
                 );
-                this.setVelocity(combinedVelocity);
             }
 
-            // Handle sneaking to dismount
-            if (player.isSneaking()) {
-                this.removeAllPassengers();
-                return;
+            // Handle jumping
+            if (this.getDataTracker().get(JUMPING) && this.isOnGround()) {
+                this.jump();
             }
 
-            // Apply motion
+            // Apply motion and friction
             this.move(MovementType.SELF, this.getVelocity());
-
-            // Broadcast velocity update to tracking players
-            if (this.getWorld().getServer() != null) {
-                EntityVelocityUpdateS2CPacket packet = new EntityVelocityUpdateS2CPacket(this);
-                for (ServerPlayerEntity serverPlayer : this.getWorld().getServer().getPlayerManager().getPlayerList()) {
-                    if (serverPlayer.getWorld().equals(this.getWorld())) {
-                        serverPlayer.networkHandler.sendPacket(packet);
-                    }
-                }
-            }
-
-            // Apply friction to horizontal movement
             this.setVelocity(this.getVelocity().multiply(0.9, 1.0, 0.9));
+
+            // Update velocities for network sync
+            if (!this.getWorld().isClient) {
+                this.velocityDirty = true;
+            }
         }
     }
 
     @Override
     protected void tickControlled(PlayerEntity controllingPlayer, Vec3d movementInput) {
         super.tickControlled(controllingPlayer, movementInput);
+
+        // Rotation
         Vec2f vec2f = this.getControlledRotation(controllingPlayer);
         this.setRotation(vec2f.y, vec2f.x);
         this.prevYaw = this.bodyYaw = this.headYaw = this.getYaw();
-        if (this.isLogicalSideForUpdatingMovement()) {
 
+        this.movementInput = movementInput;
+
+        if (this.isLogicalSideForUpdatingMovement()) {
             if (this.isOnGround()) {
                 this.setInAir(false);
-                if (this.jumpStrength > 0.0F && !this.isInAir()) {
-                    this.jump(this.jumpStrength, movementInput);
+                if (this.jumping && !this.isInAir()) {
+                    this.jump();
                 }
-
-                this.jumpStrength = 0.0F;
             }
         }
-
-    }
-
-    protected void jump(float strength, Vec3d movementInput) {
-        double d = (double)this.getJumpVelocity(strength);
-        Vec3d vec3d = this.getVelocity();
-        this.setVelocity(vec3d.x, d, vec3d.z);
-        this.setInAir(true);
-        this.velocityDirty = true;
-        if (movementInput.z > (double)0.0F) {
-            float f = MathHelper.sin(this.getYaw() * ((float)Math.PI / 180F));
-            float g = MathHelper.cos(this.getYaw() * ((float)Math.PI / 180F));
-            this.setVelocity(this.getVelocity().add((double)(-0.4F * f * strength), (double)0.0F, (double)(0.4F * g * strength)));
-        }
-
     }
 
     @Override
@@ -197,24 +167,23 @@ public class CardboardBoxEntity extends LivingEntity implements JumpingMount {
     }
 
     @Override
+    public void setJumping(boolean jumping) {
+        this.getDataTracker().set(JUMPING, jumping);
+        this.jumping = jumping;
+    }
+
+    @Override
     public void jump() {
-        if (!this.isInAir() && this.isOnGround()) {
-            // Use a fixed jump velocity instead of relying on jumpStrength
-            double jumpVelocity = 0.5; // You can adjust this value
+        if (this.isOnGround()) {
+            double jumpVelocity = 0.7; // Increased jump height
             Vec3d currentVelocity = this.getVelocity();
 
-            // Apply upward velocity
-            this.setVelocity(currentVelocity.x, jumpVelocity, currentVelocity.z);
-
-            // Apply forward momentum if moving forward
-            if (this.movementInput.z > 0.0F) {
-                float yawRadians = this.getYaw() * ((float)Math.PI / 180F);
-                this.setVelocity(this.getVelocity().add(
-                        -0.2F * MathHelper.sin(yawRadians),
-                        0.0,
-                        0.2F * MathHelper.cos(yawRadians)
-                ));
-            }
+            // Apply upward velocity with jump strength
+            this.setVelocity(
+                    currentVelocity.x,
+                    jumpVelocity,
+                    currentVelocity.z
+            );
 
             this.setInAir(true);
             this.velocityDirty = true;
@@ -236,24 +205,22 @@ public class CardboardBoxEntity extends LivingEntity implements JumpingMount {
     }
 
     @Override
-    public void setJumping(boolean jumping) {
-        this.getDataTracker().set(JUMPING, jumping);
-        this.jumping = jumping;
-    }
-
-    @Override
     public boolean canJump() {
         return true; // Allow jumping at all times (no saddle requirement like horses)
     }
 
     @Override
     public void startJumping(int height) {
-        this.setJumping(true);
+        if (this.isOnGround()) {
+            this.setJumping(true);
+            this.jumpStrength = 1.0F;
+        }
     }
 
     @Override
     public void stopJumping() {
         this.setJumping(false);
+        this.jumpStrength = 0.0F;
     }
 
     @Override
@@ -346,5 +313,19 @@ public class CardboardBoxEntity extends LivingEntity implements JumpingMount {
     @Override
     public void setVelocityClient(double x, double y, double z) {
         super.setVelocityClient(x, y, z);
+    }
+
+    @Override
+    protected boolean canAddPassenger(Entity passenger) {
+        return this.getPassengerList().size() < 1;
+    }
+
+    @Override
+    protected void updateLimbs(float v) {
+        // This helps with animation timing if you add any
+        super.updateLimbs(v);
+        if (this.getDataTracker().get(JUMPING)) {
+            this.jump();
+        }
     }
 }
