@@ -4,8 +4,10 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.fabricmc.fabric.api.registry.FuelRegistry;
 import net.minecraft.component.type.FoodComponent;
+import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.item.Item;
@@ -33,12 +35,11 @@ public class Cardboardbox implements ModInitializer {
     public static final EntityType<CardboardBoxEntity> CARDBOARD_BOX_ENTITY = Registry.register(
             Registries.ENTITY_TYPE,
             Identifier.of(MOD_ID, "cardboard_box"),
-                    EntityType.Builder.create(CardboardBoxEntity::new, SpawnGroup.MISC)
-                    .dimensions(1.0f, 1.0f)
-                    .maxTrackingRange(10)
+            FabricEntityTypeBuilder.<CardboardBoxEntity>create(SpawnGroup.MISC, CardboardBoxEntity::new)
+                    .dimensions(EntityDimensions.fixed(0.9f, 0.9f))
+                    .trackRangeBlocks(10)
                     .build()
     );
-
 
     @Override
     public void onInitialize() {

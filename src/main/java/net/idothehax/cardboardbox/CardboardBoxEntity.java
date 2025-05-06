@@ -36,10 +36,9 @@ public class CardboardBoxEntity extends LivingEntity implements JumpingMount {
     public static DefaultAttributeContainer.Builder createAttributes() {
         return LivingEntity.createLivingAttributes()
                 .add(EntityAttributes.GENERIC_MAX_HEALTH, 10.0)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.2)
-                .add(EntityAttributes.GENERIC_JUMP_STRENGTH, 0.5)
-                .add(EntityAttributes.GENERIC_STEP_HEIGHT, 1)
-                .add(EntityAttributes.GENERIC_GRAVITY);
+                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.4)
+                .add(EntityAttributes.GENERIC_JUMP_STRENGTH, 0.7)
+                .add(EntityAttributes.GENERIC_STEP_HEIGHT, 1);
     }
 
     @Override
@@ -56,8 +55,8 @@ public class CardboardBoxEntity extends LivingEntity implements JumpingMount {
             float moveForward = (float)movementInput.z;
             float moveStrafing = (float)movementInput.x;
 
-            // Adjust speed here
-            float speed = 0.15F;
+            // Increased speed
+            float speed = 0.4F;
 
             Vec3d movement = new Vec3d(
                     moveStrafing * speed,
@@ -86,33 +85,54 @@ public class CardboardBoxEntity extends LivingEntity implements JumpingMount {
             float strafe = player.sidewaysSpeed;
             float yaw = player.getYaw();
 
+            Vec3d currentVelocity = this.getVelocity();
+
             // Only apply movement if there's input
             if (forward != 0 || strafe != 0) {
                 Vec3d movement = new Vec3d(strafe, 0, forward)
                         .rotateY((float) Math.toRadians(-yaw))
-                        .multiply(0.1); // Speed multiplier
+                        .multiply(0.4);
 
-                // Set velocity while preserving vertical movement
-                Vec3d velocity = this.getVelocity();
+                // IMPORTANT: Only update x and z components, preserve y velocity
                 this.setVelocity(
                         movement.x,
-                        velocity.y,
+                        currentVelocity.y,  // Preserve vertical velocity
                         movement.z
+                );
+            } else {
+                // When not moving, preserve vertical velocity only
+                this.setVelocity(
+                        currentVelocity.x * 0.91,
+                        currentVelocity.y,
+                        currentVelocity.z * 0.91
                 );
             }
 
-            // Handle jumping
-            if (this.getDataTracker().get(JUMPING) && this.isOnGround()) {
-                this.jump();
+            // Apply gravity only if in air
+            if (!this.isOnGround()) {
+                this.setVelocity(this.getVelocity().add(0, -0.08, 0));
             }
 
-            // Apply motion and friction
+            // Apply motion
             this.move(MovementType.SELF, this.getVelocity());
-            this.setVelocity(this.getVelocity().multiply(0.9, 1.0, 0.9));
 
-            // Update velocities for network sync
+            // Apply air resistance to vertical movement only when in air
+            Vec3d velocity = this.getVelocity();
+            if (!this.isOnGround()) {
+                this.setVelocity(
+                        velocity.x,
+                        velocity.y * 0.98, // Air resistance on vertical movement
+                        velocity.z
+                );
+            }
+
             if (!this.getWorld().isClient) {
                 this.velocityDirty = true;
+            }
+
+            // Update ground state
+            if (this.isOnGround()) {
+                this.inAir = false;
             }
         }
     }
@@ -167,25 +187,11 @@ public class CardboardBoxEntity extends LivingEntity implements JumpingMount {
     }
 
     @Override
-    public void setJumping(boolean jumping) {
-        this.getDataTracker().set(JUMPING, jumping);
-        this.jumping = jumping;
-    }
-
-    @Override
     public void jump() {
         if (this.isOnGround()) {
-            double jumpVelocity = 0.7; // Increased jump height
-            Vec3d currentVelocity = this.getVelocity();
-
-            // Apply upward velocity with jump strength
-            this.setVelocity(
-                    currentVelocity.x,
-                    jumpVelocity,
-                    currentVelocity.z
-            );
-
-            this.setInAir(true);
+            double jumpForce = 0.5; // Adjust this value for jump height
+            this.setVelocity(this.getVelocity().add(0, jumpForce, 0));
+            this.jumping = true;
             this.velocityDirty = true;
         }
     }
@@ -205,22 +211,39 @@ public class CardboardBoxEntity extends LivingEntity implements JumpingMount {
     }
 
     @Override
-    public boolean canJump() {
-        return true; // Allow jumping at all times (no saddle requirement like horses)
-    }
-
-    @Override
     public void startJumping(int height) {
         if (this.isOnGround()) {
-            this.setJumping(true);
-            this.jumpStrength = 1.0F;
+            this.jumping = true;
+            this.getDataTracker().set(JUMPING, true);
+
+            Vec3d currentVelocity = this.getVelocity();
+
+            // Apply jump velocity while preserving horizontal momentum
+            this.setVelocity(
+                    currentVelocity.x,
+                    0.5,
+                    currentVelocity.z
+            );
+
+            this.velocityDirty = true;
+            this.inAir = true;
         }
     }
 
     @Override
     public void stopJumping() {
-        this.setJumping(false);
-        this.jumpStrength = 0.0F;
+        this.jumping = false;
+        this.getDataTracker().set(JUMPING, false);
+    }
+
+    @Override
+    public boolean canJump() {
+        return this.isOnGround();
+    }
+
+    @Override
+    public void setJumping(boolean jumping) {
+        this.getDataTracker().set(JUMPING, jumping);
     }
 
     @Override
@@ -327,5 +350,10 @@ public class CardboardBoxEntity extends LivingEntity implements JumpingMount {
         if (this.getDataTracker().get(JUMPING)) {
             this.jump();
         }
+    }
+
+    @Override
+    public boolean isPushable() {
+        return true;
     }
 }
